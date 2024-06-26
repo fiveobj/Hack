@@ -34,10 +34,9 @@ public class parser {
 
 
     /**
-     * @throws IOException
      * 从输入中读取下一条命令
      */
-    public boolean advance() throws IOException {
+    public boolean advance() {
 
         if (index>size-1){
             System.out.println("程序已读完");

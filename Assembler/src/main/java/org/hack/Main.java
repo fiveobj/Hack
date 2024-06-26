@@ -16,7 +16,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
-            System.out.println("Usage: java ReadFileLineByLine <file-path>");
+            System.out.println("Usage: java Main <file-path>");
             return;
         }
        //将输入文件的内容保存下来
