@@ -16,6 +16,13 @@ public class CodeWriter {
     private static int eq_i = 0,gt_i=0,lt_i=0;
 
     /**
+     * 编写执行VM初始化的汇编代码，引导程序代码，该代码必须被置于输出文件的开头
+     * @return
+     */
+    public List<String> writeInit(){
+        return null;
+    }
+    /**
      * 将给定的算术操作所对应的汇编代码写至输出
      * @param command
      */
@@ -182,39 +189,76 @@ public class CodeWriter {
         return ans;
     }
 
-    public List<String> writerPushPop(CommandType command,String segment,int index){
+    public List<String> writerPushPop(CommandType command,String segment,int index,String filename){
         List<String> ans = new ArrayList<>();
         switch (command){
             case C_POP:
                 //获取弹出要存的目的地址存到R15
-                ans.add("@"+index);//获取偏址
-                ans.add("D=A");//偏址存到D中
-
                 switch (segment){
+                    /**
+                     * ARG、LCL、THIS、THAT中存的是对应段的地址，即基址
+                     * 1. 获取偏址index
+                     * 2. 偏址保存到D中
+                     * 3. 获取基址
+                     * 4. 获取最终地址到D中
+                     */
                     case "argument":
-                        ans.add("@ARG");//获取存储基地址的地址
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@ARG");
+                        ans.add("D=D+M");
                         break;
                     case "local":
-                        ans.add("@LCL");//获取存储基地址的地址
-                        break;
-                    case "static":
-                        break;
-                    case "constant":
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@LCL");
+                        ans.add("D=D+M");
                         break;
                     case "this":
-                        ans.add("@THIS");//获取存储基地址的地址
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@THIS");
+                        ans.add("D=D+M");
                         break;
                     case "that":
-                        ans.add("@THAT");//获取存储基地址的地址
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@THAT");
+                        ans.add("D=D+M");
                         break;
+                    /**
+                     * static 是静态变量 以 文件名.变量值 作为符号，从16开始存储
+                     */
+                    case "static":
+                        ans.add("@"+filename+"."+index);//获取静态变量对应的地址
+                        ans.add("D=M");//地址存到D中，存疑，我觉得应该是D=A
+                        break;
+                    /**
+                     * 虚拟段，不存在，即没有 pop constant index 的命令
+                     */
+                    case "constant":
+                        break;
+                    /**
+                     * pointer指向的是RAM3-4，即THIS、THAT,对pointer的操作是对THIS、THAT所存内容(即基址)的操作，对THIS、THAT的操作是对基址所指向段的操作
+                     * temp指向的是RAM5-12，对其内容的修改
+                     * 即 pointer、temp直接等于基址，而不是指向的内存为基址
+                     */
                     case "pointer":
+                        ans.add("@"+index);//获取偏址
+                        ans.add("D=A");//偏址存到D中
+                        ans.add("@3");//获取存储基地址的地址
+                        ans.add("D=D+A");//获取最终的地址 this/that
                         break;
                     case "temp":
+                        ans.add("@"+index);//获取偏址
+                        ans.add("D=A");//偏址存到D中
                         ans.add("@5");//获取存储基地址的地址
+                        ans.add("D=D+A");//获取最终的地址
                         break;
                 }
-                ans.add("D=D+M");//获取最终的地址
-                ans.add("@R15");//将最终地址存到R15中
+
+                //将最终地址存到R15中
+                ans.add("@R15");
                 ans.add("M=D");
 
                 //弹出栈顶保存到D
@@ -228,40 +272,58 @@ public class CodeWriter {
                 ans.add("M=D");
                 break;
             case C_PUSH:
-                //先把目的地址的值存到D
-                ans.add("@"+index);//获取偏址
-                ans.add("D=A");//偏址存到D中
+                //先把值存到D
+
                 switch (segment){
                     case "argument":
-                        ans.add("@ARG");//获取存储基地址的地址
-                        ans.add("A=D+M");//获取最终的地址
-                        ans.add("D=M");//将最终地址存到D中
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@ARG");
+                        ans.add("A=D+M");
+                        ans.add("D=M");
                         break;
                     case "local":
-                        ans.add("@LCL");//获取存储基地址的地址
-                        ans.add("A=D+M");//获取最终的地址
-                        ans.add("D=M");//将最终地址存到D中
-                        break;
-                    case "static":
-                        break;
-                    case "constant":
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@LCL");
+                        ans.add("A=D+M");
+                        ans.add("D=M");
                         break;
                     case "this":
-                        ans.add("@THIS");//获取存储基地址的地址
-                        ans.add("A=D+M");//获取最终的地址
-                        ans.add("D=M");//将最终地址存到D中
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@THIS");
+                        ans.add("A=D+M");
+                        ans.add("D=M");
                         break;
                     case "that":
-                        ans.add("@THAT");//获取存储基地址的地址
-                        ans.add("A=D+M");//获取最终的地址
-                        ans.add("D=M");//将最终地址存到D中
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@THAT");
+                        ans.add("A=D+M");
+                        ans.add("D=M");
+                        break;
+                    case "static":
+                        ans.add("@"+filename+"."+index);
+                        ans.add("D=M");
+                        break;
+                    case "constant":
+                        ans.add("@"+index);
+                        ans.add("D=A");
                         break;
                     case "pointer":
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@3");
+                        ans.add("A=D+A");
+                        ans.add("D=M");
                         break;
                     case "temp":
-                        ans.add("@5");//获取存储基地址的地址
-                        ans.add("A=D+M");//获取最终的地址
-                        ans.add("D=M");//将最终地址存到D中
+                        ans.add("@"+index);
+                        ans.add("D=A");
+                        ans.add("@5");
+                        ans.add("A=D+A");
+                        ans.add("D=M");
                         break;
                 }
 

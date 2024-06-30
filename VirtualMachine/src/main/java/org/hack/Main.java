@@ -112,7 +112,7 @@ public class Main {
                 if (commandType==CommandType.C_ARITHMETIC){
                     ans = codeWriter.writeArithmetic(parser.getCurrentCommand());
                 }else if (commandType==CommandType.C_POP||commandType==CommandType.C_PUSH){
-                    ans = codeWriter.writerPushPop(commandType, parser.getArg1(), parser.getArg2());
+                    ans = codeWriter.writerPushPop(commandType, parser.getArg1(), parser.getArg2(), getFileNameWithoutExtension(file.getPath()));
                 }
                 //把ans写入输出文件
                 for(String s : ans){

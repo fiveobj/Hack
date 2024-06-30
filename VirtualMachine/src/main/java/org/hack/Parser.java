@@ -62,7 +62,7 @@ public class Parser {
             case "goto":
                 currentCommandType=CommandType.C_GOTO;
                 break;
-            case "if":
+            case "if-goto":
                 currentCommandType=CommandType.C_IF;
                 break;
             case "function":

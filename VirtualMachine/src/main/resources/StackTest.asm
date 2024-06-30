@@ -17,7 +17,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @eq_0
 D;JNE
@@ -44,7 +43,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @eq_1
 D;JNE
@@ -71,7 +69,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @eq_2
 D;JNE
@@ -98,7 +95,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @lt_0
 D;JGE
@@ -125,7 +121,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @lt_1
 D;JGE
@@ -152,7 +147,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @lt_2
 D;JGE
@@ -179,7 +173,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @gt_0
 D;JLE
@@ -206,7 +199,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @gt_1
 D;JLE
@@ -233,7 +225,6 @@ AM=M-1
 D=M
 A=A-1
 D=M-D
-D=M
 M=0
 @gt_2
 D;JLE
