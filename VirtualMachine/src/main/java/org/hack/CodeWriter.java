@@ -1,5 +1,6 @@
 package org.hack;
 
+import javax.xml.stream.events.EndDocument;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,14 +14,102 @@ import static org.hack.RAMAddress.*;
  */
 public class CodeWriter {
 
-    private static int eq_i = 0,gt_i=0,lt_i=0;
+    private static int eq_i = 0,gt_i=0,lt_i=0,call_i=0;
 
     /**
      * 编写执行VM初始化的汇编代码，引导程序代码，该代码必须被置于输出文件的开头
      * @return
      */
     public List<String> writeInit(){
-        return null;
+        List<String> ans = new ArrayList<>();
+
+        //1.初始化帧
+        //SP=256
+        ans.add("@256");
+        ans.add("D=A");
+        ans.add("@SP");
+        ans.add("M=D");
+        //LCL=1
+        ans.add("@1");
+        ans.add("D=A");
+        ans.add("@LCL");
+        ans.add("M=D");
+        //ARG=2
+        ans.add("@2");
+        ans.add("D=A");
+        ans.add("@ARG");
+        ans.add("M=D");
+        //THIS=3
+        ans.add("@3");
+        ans.add("D=A");
+        ans.add("@THIS");
+        ans.add("M=D");
+        //THAT=4
+        ans.add("@4");
+        ans.add("D=A");
+        ans.add("@THAT");
+        ans.add("M=D");
+
+        //2.保存帧
+        //push 引导程序的返回地址
+        ans.add("@bootstrap");
+        ans.add("D=A");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+        //保存LCL
+        ans.add("@LCL");
+        ans.add("D=M");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+        //保存ARG
+        ans.add("@ARG");
+        ans.add("D=M");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+        //保存THIS
+        ans.add("@THIS");
+        ans.add("D=M");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+        //保存THAT
+        ans.add("@THAT");
+        ans.add("D=M");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+        //3.更新ARG、LCL
+        //ARG=SP-n-5
+        ans.add("@5");
+        ans.add("D=A");
+        ans.add("@SP");
+        ans.add("D=M-D");
+        ans.add("@ARG");
+        ans.add("M=D");
+        //LCL=sp
+        ans.add("@SP");
+        ans.add("D=M");
+        ans.add("@LCL");
+        ans.add("M=D");
+        //4.跳转
+        ans.add("@Sys.init");
+        ans.add("0;JMP");
+        //5.标记返回地址
+        ans.add("(bootstrap)");
+        return ans;
     }
     /**
      * 将给定的算术操作所对应的汇编代码写至输出
@@ -189,7 +278,15 @@ public class CodeWriter {
         return ans;
     }
 
-    public List<String> writerPushPop(CommandType command,String segment,int index,String filename){
+    /**
+     * 翻译PUSH、POP指令
+     * @param command 指令类型
+     * @param segment 段名称
+     * @param index 段偏址
+     * @param filename 文件名称
+     * @return
+     */
+    public List<String> writePushPop(CommandType command,String segment,int index,String filename){
         List<String> ans = new ArrayList<>();
         switch (command){
             case C_POP:
@@ -335,6 +432,212 @@ public class CodeWriter {
                 ans.add("M=M+1");
             default:
                 break;
+        }
+        return ans;
+    }
+
+    /**
+     * 翻译lable的代码 lable lable
+     * @param lable 标签
+     * @param fName 函数名称
+     * @return
+     */
+    public List<String> writeLable(String lable, String fName){
+        List<String> ans = new ArrayList<>();
+        ans.add("("+fName+"$"+lable);
+        return ans;
+    }
+
+    /**
+     *
+     * @param lable 标签
+     * @param fName 函数名称
+     * @return
+     */
+    public List<String> writeGoto(String lable, String fName){
+        List<String> ans = new ArrayList<>();
+        String lableName = fName+"$"+lable;
+        ans.add("@"+lableName);
+        ans.add("0;JMP");
+        return ans;
+    }
+
+    /**
+     *
+     * @param lable 标签
+     * @param fName 函数名称
+     * @return
+     */
+    public List<String> writeIf(String lable, String fName){
+        List<String> ans = new ArrayList<>();
+        String lableName = fName+"$"+lable;
+        ans.add("@SP");
+        ans.add("AM=M-1");
+        ans.add("D=M");
+        ans.add("@"+lableName);
+        ans.add("D;JNE");
+        return ans;
+    }
+
+    /**
+     *
+     * @param fName 函数名称
+     * @param argNumber 参数个数
+     * @return
+     */
+    public List<String> writeCall(String fName, int argNumber){
+        List<String> ans = new ArrayList<>();
+        String lableName = "END" +"$"+fName+"$"+(call_i++);
+        int tmp = argNumber+5;
+        //1. 保存帧
+        //存入返回地址、LCL、ARG、THIS、THAT
+        ans.add("@"+lableName);
+        ans.add("D=A");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+
+        ans.add("@LCL");
+        ans.add("D=M");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+
+        ans.add("@ARG");
+        ans.add("D=M");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+
+        ans.add("@THIS");
+        ans.add("D=M");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+
+        ans.add("@THAT");
+        ans.add("D=M");
+        ans.add("@SP");
+        ans.add("A=M");
+        ans.add("M=D");
+        ans.add("@SP");
+        ans.add("M=M+1");
+
+        //2. 修改状态 ARG、LCL
+        ans.add("@"+tmp);
+        ans.add("D=A");
+        ans.add("@SP");
+        ans.add("D=M-D");
+        ans.add("@ARG");
+        ans.add("M=D");
+
+        ans.add("@SP");
+        ans.add("D=M");
+        ans.add("@LCL");
+        ans.add("M=D");
+        //3. 跳转
+        ans.add("@"+fName);
+        ans.add("0;JMP");
+        //4. 标记返回地址
+        ans.add("("+lableName+")");
+        return ans;
+
+    }
+
+    public List<String> writeReturn(){
+        List<String> ans = new ArrayList<>();
+        //1.保存ARG地址到R15
+        ans.add("@LCL");
+        ans.add("D=M");
+        ans.add("@R15");
+        ans.add("M=D");
+
+        //2.保存返回地址到R14
+        ans.add("@5");
+        ans.add("D=A");
+        ans.add("@R15");
+        ans.add("A=M-D");
+        ans.add("D=M");
+        ans.add("@R14");
+        ans.add("M=D");
+
+        //3.函数返回值到ARG0
+        ans.add("@SP");
+        ans.add("AM=M-1");
+        ans.add("D=M");
+        ans.add("@ARG");
+        ans.add("A=M");
+        ans.add("M=D");
+
+        //4.更新SP=ARG1
+        ans.add("@ARG");
+        ans.add("D=M+1");
+        ans.add("@SP");
+        ans.add("M=D");
+
+        //5.更新帧LCL、ARG、THIS、THAT
+        ans.add("@R15");
+        ans.add("A=M-1");
+        ans.add("D=M");
+        ans.add("@THAT");
+        ans.add("M=D");
+
+        ans.add("@2");
+        ans.add("D=A");
+        ans.add("@R15");
+        ans.add("A=M-D");
+        ans.add("D=M");
+        ans.add("@THIS");
+        ans.add("M=D");
+
+        ans.add("@3");
+        ans.add("D=A");
+        ans.add("@R15");
+        ans.add("A=M-D");
+        ans.add("D=M");
+        ans.add("@ARG");
+        ans.add("M=D");
+
+        ans.add("@4");
+        ans.add("D=A");
+        ans.add("@R15");
+        ans.add("A=M-D");
+        ans.add("D=M");
+        ans.add("@LCL");
+        ans.add("M=D");
+
+        //6.跳转返回
+        ans.add("@R14");
+        ans.add("A=M");
+        ans.add("0;JMP");
+
+
+        return ans;
+    }
+
+    /**
+     *
+     * @param fName 函数名称
+     * @param argNumber 参数个数
+     * @return
+     */
+    public List<String> writeFunction(String fName, int argNumber){
+        List<String> ans = new ArrayList<>();
+        ans.add("("+fName+")");
+        for (int i=0;i<argNumber;i++){
+            ans.add("@SP");
+            ans.add("A=M");
+            ans.add("M=0");
+            ans.add("@SP");
+            ans.add("M=M+1");
         }
         return ans;
     }
