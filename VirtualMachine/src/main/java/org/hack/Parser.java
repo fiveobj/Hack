@@ -18,6 +18,7 @@ public class Parser {
     private String currentCommand;//当前待编译的命令行
     private CommandType currentCommandType;//命令类型
     private String[] currentCommandSplit;
+    private String functionName;
     Parser(List<String> file){
         this.file=file;
         this.size = file.size();
@@ -67,6 +68,7 @@ public class Parser {
                 break;
             case "function":
                 currentCommandType=CommandType.C_FUNCTION;
+                functionName=getArg1();
                 break;
             case "return":
                 currentCommandType=CommandType.C_RETURN;
@@ -126,5 +128,9 @@ public class Parser {
 
     public String getCurrentCommand() {
         return currentCommand;
+    }
+
+    public String getFunctionName() {
+        return functionName;
     }
 }

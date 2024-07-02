@@ -20,7 +20,7 @@ public class CodeWriter {
      * 编写执行VM初始化的汇编代码，引导程序代码，该代码必须被置于输出文件的开头
      * @return
      */
-    public List<String> writeInit(){
+    public static List<String> writeInit(){
         List<String> ans = new ArrayList<>();
 
         //1.初始化帧
@@ -328,7 +328,7 @@ public class CodeWriter {
                      */
                     case "static":
                         ans.add("@"+filename+"."+index);//获取静态变量对应的地址
-                        ans.add("D=M");//地址存到D中，存疑，我觉得应该是D=A
+                        ans.add("D=A");//地址存到D中
                         break;
                     /**
                      * 虚拟段，不存在，即没有 pop constant index 的命令
@@ -444,7 +444,7 @@ public class CodeWriter {
      */
     public List<String> writeLable(String lable, String fName){
         List<String> ans = new ArrayList<>();
-        ans.add("("+fName+"$"+lable);
+        ans.add("("+fName+"$"+lable+")");
         return ans;
     }
 

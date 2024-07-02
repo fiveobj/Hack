@@ -27,6 +27,9 @@ public class Main {
             while ((line = br.readLine()) != null) {
 
                 String[] line1s = line.split("//");//去掉注释
+                if (0 == line1s.length) {
+                    continue;
+                }
                 String line1 = line1s[0].trim();//去掉前后空格
                 String trimmedLine = line1.trim();
                 if (!trimmedLine.isEmpty()){
