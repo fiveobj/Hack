@@ -22,3 +22,43 @@
 3. 翻译文件
 
 ## VirtualMachine-vmToasm
+### 目录结构
+
+* main/java-代码文件
+  * main：文件读取、字符处理、输出结果
+  * Parser：分析命令类型、获取命令参数
+    * list结构存储命令行
+  * CodeWriter：将VM命令翻译成Hack汇编代码
+  * CommandType：命令类型
+  * tools：工具类
+* main/resources-测试文件
+
+### 实现思路
+
+1. 读取文件夹下的所有vm文件，去掉空行、注释行等
+2. 构造Parser对象，解析命令
+3. 构造CodeWriter对象，翻译命令
+4. Parser遍历命令行，解析结果作为命令判断条件和参数，通过CodeWriter进行翻译
+5. 文件夹下的所有vm文件翻译结果汇总
+6. 添加初始化命令到结果文件
+7. 追加翻译结果到结果文件
+   
+## Compiler-hackToxml
+### 目录结构
+
+* main/java-代码文件
+  * main:文件读取、代码预处理、执行结果
+  * CompilationEngine:根据字元和语法分析输出结果
+  * JackTokenizer:解析代码字元
+  * tokenType:五种字元类型
+  * tools:工具类
+  * xmlParam:标签类
+* main/resources-测试文件
+
+### 实现思路
+
+1. 读取文件，处理单行注释、多行注释、文档注释，并生成中间文件
+2. 构造JackTokenizer对中间文件进行处理，获得字元
+   * 使用在正则表达式对字元进行提取
+3. 构造CompilationEngine对JackTokenizer中的字元根据语法规则进行匹配
+4. 最终输出结果到xml文件
