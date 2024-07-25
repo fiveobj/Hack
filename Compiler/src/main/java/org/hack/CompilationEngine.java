@@ -1,5 +1,7 @@
 package org.hack;
 
+import org.hack.enumfile.tokenType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,22 +29,22 @@ public class CompilationEngine {
     public void CompileClass(){
         String s = jackTokenizer.keyword();
 //        System.out.println(s);
-        if (s.equals("CLASS")){
+        if (s.equals("class")){
             outputList.add(class_.getXmlparamstart());
-            CompileTokenKey("CLASS");
+            CompileTokenKey("class");
             jackTokenizer.advance();
             CompileTokenIden();
             jackTokenizer.advance();
             CompileTokenSymbol("{");
             jackTokenizer.advance();
             String s1 = jackTokenizer.keyword();
-            while (s1.equals("STATIC")||s1.equals("FIELD")){
+            while (s1.equals("static")||s1.equals("field")){
                 CompileClassVarDec();
                 jackTokenizer.advance();
                 s1 = jackTokenizer.keyword();
             }
             s1 = jackTokenizer.keyword();
-            while (s1.equals("CONSTRUCTOR")||s1.equals("FUNCTION")||s1.equals("METHOD")) {
+            while (s1.equals("constructor")||s1.equals("function")||s1.equals("method")) {
                 CompileSubroutineDec();
                 jackTokenizer.advance();
                 s1 = jackTokenizer.keyword();
@@ -51,7 +53,7 @@ public class CompilationEngine {
             outputList.add(class_.getXmlparamend());
 
         }else {
-            System.out.println("!s.equals(\"CLASS\")");
+            System.out.println("!s.equals(\"class\")");
         }
     }
 
@@ -61,11 +63,11 @@ public class CompilationEngine {
      * */
     public void CompileClassVarDec(){
         String s = jackTokenizer.keyword();
-        if (s.equals("STATIC")){
+        if (s.equals("static")){
             outputList.add(classVarDec.getXmlparamstart());
-            CompileTokenKey("STATIC");
+            CompileTokenKey("static");
             jackTokenizer.advance();
-            if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("INT") || jackTokenizer.keyword().equals("CHAR") || jackTokenizer.keyword().equals("BOOLEAN")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
+            if ((jackTokenizer.tokenType()== tokenType.KEYWORD && (jackTokenizer.keyword().equals("int") || jackTokenizer.keyword().equals("CHAR") || jackTokenizer.keyword().equals("BOOLEAN")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
                 CompileType();
             jackTokenizer.advance();
             CompileTokenIden();
@@ -81,11 +83,11 @@ public class CompilationEngine {
             CompileTokenSymbol(";");
             outputList.add(classVarDec.getXmlparamend());
         }
-        else if (s.equals("FIELD")){
+        else if (s.equals("field")){
             outputList.add(classVarDec.getXmlparamstart());
             CompileTokenKey("FIELD");
             jackTokenizer.advance();
-            if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("INT") || jackTokenizer.keyword().equals("CHAR") || jackTokenizer.keyword().equals("BOOLEAN")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
+            if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("int") || jackTokenizer.keyword().equals("char") || jackTokenizer.keyword().equals("boolean")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
                 CompileType();
             jackTokenizer.advance();
             CompileTokenIden();
@@ -127,9 +129,9 @@ public class CompilationEngine {
         String s = jackTokenizer.keyword();
         CompileTokenKey(s);
         jackTokenizer.advance();
-        if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("INT") || jackTokenizer.keyword().equals("CHAR") || jackTokenizer.keyword().equals("BOOLEAN")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
+        if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("int") || jackTokenizer.keyword().equals("char") || jackTokenizer.keyword().equals("boolean")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
             CompileType();
-        else CompileTokenKey("VOID");
+        else CompileTokenKey("void");
         jackTokenizer.advance();
         CompileTokenIden();
         jackTokenizer.advance();
@@ -152,7 +154,7 @@ public class CompilationEngine {
         CompileTokenSymbol("{");
         jackTokenizer.advance();
         String s = jackTokenizer.keyword();
-        while (s.equals("VAR")){
+        while (s.equals("var")){
             CompileVarDec();
             jackTokenizer.advance();
             s= jackTokenizer.keyword();
@@ -169,7 +171,7 @@ public class CompilationEngine {
      */
     public void CompileParameterList(){
         outputList.add(parameterList.getXmlparamstart());
-        while ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("INT") || jackTokenizer.keyword().equals("CHAR") || jackTokenizer.keyword().equals("BOOLEAN")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER){
+        while ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("int") || jackTokenizer.keyword().equals("char") || jackTokenizer.keyword().equals("boolean")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER){
             CompileType();
             jackTokenizer.advance();
             CompileTokenIden();
@@ -178,7 +180,7 @@ public class CompilationEngine {
             while (s.equals(",")){
                 CompileTokenSymbol(",");
                 jackTokenizer.advance();
-                if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("INT") || jackTokenizer.keyword().equals("CHAR") || jackTokenizer.keyword().equals("BOOLEAN")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
+                if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("int") || jackTokenizer.keyword().equals("char") || jackTokenizer.keyword().equals("boolean")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
                     CompileType();
                 jackTokenizer.advance();
                 CompileTokenIden();
@@ -197,10 +199,10 @@ public class CompilationEngine {
     public void CompileVarDec(){
         outputList.add(varDec.getXmlparamstart());
         String s = jackTokenizer.keyword();
-        if (s.equals("VAR")){
-            CompileTokenKey("VAR");
+        if (s.equals("var")){
+            CompileTokenKey("var");
             jackTokenizer.advance();
-            if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("INT") || jackTokenizer.keyword().equals("CHAR") || jackTokenizer.keyword().equals("BOOLEAN")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
+            if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("int") || jackTokenizer.keyword().equals("char") || jackTokenizer.keyword().equals("boolean")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
                 CompileType();
             jackTokenizer.advance();
             CompileTokenIden();
@@ -226,21 +228,21 @@ public class CompilationEngine {
     public void CompileStatements(){
         outputList.add(statements.getXmlparamstart());
         String s = jackTokenizer.keyword();
-        while (s.equals("LET")||s.equals("IF")||s.equals("WHILE")||s.equals("DO")||s.equals("RETURN")){
+        while (s.equals("let")||s.equals("if")||s.equals("while")||s.equals("do")||s.equals("return")){
             switch (s){
-                case "LET":
+                case "let":
                     CompileLet();
                     break;
-                case "IF":
+                case "if":
                     CompileIf();
                     break;
-                case "WHILE":
+                case "while":
                     CompileWhile();
                     break;
-                case "DO":
+                case "do":
                     CompileDo();
                     break;
-                case "RETURN":
+                case "return":
                     CompileReturn();
                     break;
             }
@@ -256,7 +258,7 @@ public class CompilationEngine {
      */
     public void CompileDo(){
         outputList.add(doStatement.getXmlparamstart());
-        CompileTokenKey("DO");
+        CompileTokenKey("do");
         jackTokenizer.advance();
         CompileSubroutineCall();
         jackTokenizer.advance();
@@ -297,7 +299,7 @@ public class CompilationEngine {
      */
     public void CompileLet(){
         outputList.add(letStatement.getXmlparamstart());
-        CompileTokenKey("LET");
+        CompileTokenKey("let");
         jackTokenizer.advance();
         CompileTokenIden();
         jackTokenizer.advance();
@@ -327,7 +329,7 @@ public class CompilationEngine {
      */
     public void CompileWhile(){
         outputList.add(whileStatement.getXmlparamstart());
-        CompileTokenSymbol("WHILE");
+        CompileTokenSymbol("while");
         jackTokenizer.advance();
         CompileTokenSymbol("(");
         jackTokenizer.advance();
@@ -348,7 +350,7 @@ public class CompilationEngine {
      */
     public void CompileReturn(){
         outputList.add(returnStatement.getXmlparamstart());
-        CompileTokenKey("RETURN");
+        CompileTokenKey("return");
         jackTokenizer.advance();
         if (jackTokenizer.tokenType()==tokenType.SYMBOL&&jackTokenizer.symbol().equals(";")){
             CompileTokenSymbol(";");
@@ -365,7 +367,7 @@ public class CompilationEngine {
      */
     public void CompileIf(){
         outputList.add(ifStatement.getXmlparamstart());
-        CompileTokenKey("IF");
+        CompileTokenKey("if");
         jackTokenizer.advance();
         CompileTokenSymbol("(");
         jackTokenizer.advance();
@@ -379,8 +381,8 @@ public class CompilationEngine {
         jackTokenizer.advance();
         CompileTokenSymbol("}");
         jackTokenizer.advance();
-        if (jackTokenizer.tokenType()==tokenType.KEYWORD&& jackTokenizer.keyword().equals("ELSE")){
-            CompileTokenKey("ELSE");
+        if (jackTokenizer.tokenType()==tokenType.KEYWORD&& jackTokenizer.keyword().equals("else")){
+            CompileTokenKey("else");
             jackTokenizer.advance();
             CompileTokenSymbol("{");
             jackTokenizer.advance();
