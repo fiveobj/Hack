@@ -1,4 +1,4 @@
-package org.hack;
+package org.hack.enumfile;
 
 /**
  * @Author: WuSM

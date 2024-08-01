@@ -112,19 +112,28 @@ public class Main {
         }
 
         JackTokenizer jackTokenizer = new JackTokenizer(fileList);
-        CompilationEngine compilationEngine = new CompilationEngine(jackTokenizer);
+        CompilationEngine2 compilationEngine = new CompilationEngine2(jackTokenizer);
         List<String> outputFileList = new ArrayList<>();
         if (jackTokenizer.hasMoreTokens()){//读取内容
             System.out.println("字元未处理完成");
         }
 
         outputFileList = compilationEngine.getOutputList();
-        writeToFinalFile(tmpFile, outputFileList);
+        List<String> VMWriterAns = compilationEngine.getVMWriter();
+
+        writeToFinalFile(tmpFile, outputFileList, "XML");
+        writeToFinalFile(tmpFile, VMWriterAns, "VMW");
     }
 
-    public static void writeToFinalFile(File file, List<String> finalAns){
+    public static void writeToFinalFile(File file, List<String> finalAns, String type){
         String directoryPath = file.getParent();
-        String outputFileName = getFileNameWithoutExtension(file.getName())+".xml";
+        String outputFileName="";
+        if (type.equals("XML")){
+            outputFileName = getFileNameWithoutExtension(file.getName())+".xml";
+        }else {
+            outputFileName = getFileNameWithoutExtension(file.getName())+".vm";
+        }
+
         String outputFilePath = directoryPath+File.separator+outputFileName;
         File outputFile = new File(outputFilePath);
         // 检查文件是否存在，如果存在则删除

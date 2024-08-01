@@ -158,18 +158,18 @@ public class CodeWriter {
                 ans.add("M=M-D");
                 break;
             /**
-             * eq:val=RAM[sp2]-RAM[sp1]  val=0:RAM[sp2]=0,-1
+             * eq:val=RAM[sp2]-RAM[sp1]  val=0:RAM[sp2]=-1,0
              * @sp
              * AM=M-1
              * D=M
              * A=A-1
              * D=M-D
-             * M=0
+             * M=-1
              * @eq_0
-             * D;JNE
+             * D;JEQ
              * @sp
              * A=M-1
-             * M=-1
+             * M=0
              * (eq_0)
              */
             case "eq":
@@ -178,28 +178,28 @@ public class CodeWriter {
                 ans.add("D=M");
                 ans.add("A=A-1");
                 ans.add("D=M-D");
-                ans.add("M=0");
+                ans.add("M=-1");
                 ans.add("@eq_"+eq_i);
-                ans.add("D;JNE");
+                ans.add("D;JEQ");
                 ans.add("@sp");
                 ans.add("A=M-1");
-                ans.add("M=-1");
+                ans.add("M=0");
                 ans.add("(eq_"+eq_i+")");
                 eq_i++;
                 break;
             /**
-             * gt:val=RAM[sp2]-RAM[sp1]  val>0:true,false
+             * gt:val=RAM[sp2]-RAM[sp1]  val>0:true(-1),false(0)
              * @sp
              * AM=M-1
              * D=M
              * A=A-1
              * D=M-D
-             * M=0
+             * M=-1
              * @gt_1
-             * D;JLE
+             * D;JGT
              * @sp
              * A=M-1
-             * M=-1
+             * M=0
              * (gt_1)
              */
             case "gt":
@@ -208,12 +208,12 @@ public class CodeWriter {
                 ans.add("D=M");
                 ans.add("A=A-1");
                 ans.add("D=M-D");
-                ans.add("M=0");
+                ans.add("M=-1");
                 ans.add("@gt_"+gt_i);
-                ans.add("D;JLE");
+                ans.add("D;JGT");
                 ans.add("@sp");
                 ans.add("A=M-1");
-                ans.add("M=-1");
+                ans.add("M=0");
                 ans.add("(gt_"+gt_i+")");
                 gt_i++;
                 break;
@@ -224,12 +224,12 @@ public class CodeWriter {
              * D=M
              * A=A-1
              * D=M-D
-             * M=0
+             * M=-1
              * @lt_1
-             * D;JGE
+             * D;JLT
              * @sp
              * A=M-1
-             * M=-1
+             * M=0
              * (lt_1)
              */
             case "lt":
@@ -238,12 +238,12 @@ public class CodeWriter {
                 ans.add("D=M");
                 ans.add("A=A-1");
                 ans.add("D=M-D");
-                ans.add("M=0");
+                ans.add("M=-1");
                 ans.add("@lt_"+lt_i);
-                ans.add("D;JGE");
+                ans.add("D;JLT");
                 ans.add("@sp");
                 ans.add("A=M-1");
-                ans.add("M=-1");
+                ans.add("M=0");
                 ans.add("(lt_"+lt_i+")");
                 lt_i++;
                 break;
