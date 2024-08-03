@@ -5,6 +5,7 @@ import org.hack.enumfile.VMKind;
 import org.hack.enumfile.symbolKind;
 import org.hack.enumfile.tokenType;
 
+import java.lang.invoke.LambdaConversionException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -185,7 +186,11 @@ public class CompilationEngine2 {
         String funcName,funcType;
 
         outputList.add(subroutineDec.getXmlparamstart());
-        String s = jackTokenizer.keyword();
+        String s = jackTokenizer.keyword();//子程序类型
+
+        //如果是方法，符号表要先记录一个this
+        if (s.equals("method"))funcSymbolTable.Define("this","int",symbolKind.ARG);
+
         CompileTokenKey(s);
         jackTokenizer.advance();
         if ((jackTokenizer.tokenType()==tokenType.KEYWORD && (jackTokenizer.keyword().equals("int") || jackTokenizer.keyword().equals("char") || jackTokenizer.keyword().equals("boolean")))||jackTokenizer.tokenType()==tokenType.IDENTIFIER)
@@ -213,12 +218,8 @@ public class CompilationEngine2 {
         jackTokenizer.advance();
         CompileTokenSymbol(")");
         jackTokenizer.advance();
-        CompileSubroutineBody(s, funcName);
+        CompileSubroutineBody(s, funcName,funcType);
 
-        //如果返回类型是void，则0作为返回值
-        if (funcType.equals("void")){
-            vmWriter.writePush(CONST,0);
-        }
 
         outputList.add(subroutineDec.getXmlparamend());
     }
@@ -227,7 +228,7 @@ public class CompilationEngine2 {
      * 函数体匹配
      * '{' varDec* statements '}'
      */
-    public void CompileSubroutineBody(String funType, String funName){
+    public void CompileSubroutineBody(String funType, String funName, String funReturnType){
         outputList.add(subroutineBody.getXmlparamstart());
         CompileTokenSymbol("{");
         jackTokenizer.advance();
@@ -238,6 +239,7 @@ public class CompilationEngine2 {
             s= jackTokenizer.keyword();
         }
 
+        int FieldCount = classSymbolTable.VarCount(FIELD);
         int lclCount = funcSymbolTable.VarCount(VAR);
         // 翻译成 vm
         // 函数定义 并为局部变量初始化为0
@@ -245,7 +247,7 @@ public class CompilationEngine2 {
             case "constructor":
                 //开辟空间，并保存this指针
                 vmWriter.writeFunction(funName, lclCount);
-                vmWriter.writePush(CONST, lclCount);
+                vmWriter.writePush(CONST, FieldCount);
                 vmWriter.writeCall("Memory.alloc",1);//返回是this指针
                 vmWriter.writePop(POINTER,0);
 
@@ -254,12 +256,19 @@ public class CompilationEngine2 {
                 vmWriter.writeFunction(funName, lclCount);
                 break;
             case "method":
-                vmWriter.writeFunction(funName, lclCount+1);
+                vmWriter.writeFunction(funName, lclCount);
+                vmWriter.writePush(ARG, 0);
+                vmWriter.writePop(POINTER, 0);
                 break;
         }
 
         CompileStatements();
         jackTokenizer.advance();
+
+        /*if (funReturnType.equals("void")){
+            vmWriter.writePush(CONST,0);
+        }*/
+
         CompileTokenSymbol("}");
         outputList.add(subroutineBody.getXmlparamend());
     }
@@ -282,7 +291,7 @@ public class CompilationEngine2 {
             jackTokenizer.advance();
 
             paramName=jackTokenizer.identifier();
-            classSymbolTable.Define(paramName, paramType, symbolKind.ARG);
+            funcSymbolTable.Define(paramName, paramType, symbolKind.ARG);
 
             CompileTokenIden();
             jackTokenizer.advance();
@@ -302,7 +311,7 @@ public class CompilationEngine2 {
                 jackTokenizer.advance();
 
                 paramName=jackTokenizer.identifier();
-                classSymbolTable.Define(paramName, paramType, symbolKind.ARG);
+                funcSymbolTable.Define(paramName, paramType, symbolKind.ARG);
 
                 CompileTokenIden();
                 jackTokenizer.advance();
@@ -372,10 +381,10 @@ public class CompilationEngine2 {
                     CompileLet();
                     break;
                 case "if":
-                    CompileIf();
+                    CompileIf(ifIndex++);
                     break;
                 case "while":
-                    CompileWhile();
+                    CompileWhile(whileIndex++);
                     break;
                 case "do":
                     CompileDo();
@@ -412,41 +421,59 @@ public class CompilationEngine2 {
      * subroutineName '(' expressionList ')' | (className | varName) '.' subroutineName '(' expressionList ')'
      */
     public void CompileSubroutineCall(){
-        //如果是对象的话，就是该类的变量，会被保存在符号表里
+        //如果是对象的话，就是该对象的方法，会被保存在符号表里
         String subroutineName = jackTokenizer.identifier();
         String subroutineType="";
+        symbolKind subroutineKind = null;
         int subroutineIndex=0;
         boolean isMethod = false;//程序调用是否是方法
         //先看子程序作用区间有没有，再看父区间有没有
         if (funcSymbolTable.ishas(subroutineName)){
             subroutineType = funcSymbolTable.TypeOf(subroutineName);
             subroutineIndex = funcSymbolTable.IndexOf(subroutineName);
+            subroutineKind = funcSymbolTable.kindOf(subroutineName);
             isMethod=true;
         }
-        if (funcSymbolTable.ishas(subroutineName)){
-            subroutineType = funcSymbolTable.TypeOf(subroutineName);
-            subroutineIndex = funcSymbolTable.IndexOf(subroutineName);
+        if (classSymbolTable.ishas(subroutineName)){
+            subroutineType = classSymbolTable.TypeOf(subroutineName);
+            subroutineIndex = classSymbolTable.IndexOf(subroutineName);
+            subroutineKind = classSymbolTable.kindOf(subroutineName);
             isMethod = true;
         }
 
         CompileTokenIden();
         jackTokenizer.advance();
         String s = jackTokenizer.symbol();
-        if (s.equals("(")){ // 好像没有这种情况
+        if (s.equals("(")){ // 直接调用同类的方法
+
+            //方法先推入this
+            vmWriter.writePush(POINTER, 0);
+
             CompileTokenSymbol("(");
             jackTokenizer.advance();
             int expressCount = CompileExpressionList();
             jackTokenizer.advance();
             CompileTokenSymbol(")");
 
-            vmWriter.writeCall(className+subroutineName, expressCount);
+            //调用方法
+            vmWriter.writeCall(className+"."+subroutineName, expressCount+1);
 
         }else if (s.equals(".")){ //其他类的函数/构造函数 对象的方法
-            if (isMethod)vmWriter.writePush(THIS, subroutineIndex);//如果是方法，将对象的this推入栈中
+            if (isMethod){
+                //如果是方法，将对象的this推入栈中
+                switch (subroutineKind) {
+                    case STATIC -> vmWriter.writePush(STATIC, subroutineIndex);
+                    case ARG -> vmWriter.writePush(ARG, subroutineIndex);
+                    case FIELD -> vmWriter.writePush(THIS, subroutineIndex);
+                    case VAR -> vmWriter.writePush(LOCAL, subroutineIndex);
+                }
+
+            }
             CompileTokenSymbol(".");
             jackTokenizer.advance();
 
-            subroutineName = subroutineName+"."+jackTokenizer.identifier();
+            if (isMethod)subroutineName = subroutineType+"."+jackTokenizer.identifier();
+            else subroutineName = subroutineName+"."+jackTokenizer.identifier();
 
             CompileTokenIden();
             jackTokenizer.advance();
@@ -455,6 +482,7 @@ public class CompilationEngine2 {
             int expressCount = CompileExpressionList();
             jackTokenizer.advance();
             CompileTokenSymbol(")");
+
             if(isMethod)vmWriter.writeCall(subroutineName, expressCount+1);
             else vmWriter.writeCall(subroutineName, expressCount);
         }
@@ -467,9 +495,11 @@ public class CompilationEngine2 {
      * 1.根据varName获取地址（得到数组的基址），推入到栈中
      * 2.经过第一个 expression 的操作之后，栈顶应该保存了 偏址
      * 3.add 计算 目的地址 = 基址 + 偏址
-     * 4.将地址保存到 that 指针中
-     * 5.计算第二个 expression， 即赋值结果
-     * 6.将结果推入 that 指针
+     * 4.将地址保留在栈中，先不保存到that，因为下一个expression中可能涉及数组的计算，会覆盖that
+     * 5.计算第二个 expression， 即赋值结果 此时栈顶为计算结果 栈顶后一个为目的地址
+     * 6.暂存栈顶的计算结果
+     * 7.目的地址存入that
+     * 8.将结果赋值给that
      * 如果是基本类型或者对象  对象不会出现 对象.字段 = xxx
      * 直接将结果推入到目的地址中
      */
@@ -492,12 +522,10 @@ public class CompilationEngine2 {
             varKind = classSymbolTable.kindOf(varName);
         }
 
-
-
         CompileTokenIden();
         jackTokenizer.advance();
         String s = jackTokenizer.symbol();
-        if (s.equals("[")){ //如果是数组 就用that保存数组的最终地址
+        if (s.equals("[")){ //如果是数组 计算最终地址保留在栈内
 
             isArray = true;
             //将基址推入栈中
@@ -524,9 +552,8 @@ public class CompilationEngine2 {
             jackTokenizer.advance();
             s = jackTokenizer.symbol();
 
-            vmWriter.writeArithmetic(ADD);//计算目的地址
-            //现在栈顶为目的地址,将其保存到that中
-            vmWriter.writePop(POINTER,1);
+            vmWriter.writeArithmetic(ADD);//计算目的地址，并保留在栈中
+
         }
 
 
@@ -537,9 +564,15 @@ public class CompilationEngine2 {
             CompileExpression();
             jackTokenizer.advance();
             CompileTokenSymbol(";");
+
             //此时栈顶为 expression 的结果，将结果保存到 目标地址中
-            if (isArray)vmWriter.writePop(THAT, 0);
-            else {
+            if (isArray){//数组的目标地址保存在栈顶的后一个
+                vmWriter.writePop(TEMP,0);//temp0=expression
+                vmWriter.writePop(POINTER,1);//目的地址保存到that
+                vmWriter.writePush(TEMP, 0);//推入计算结果
+                vmWriter.writePop(THAT, 0);//计算结果保存到目的地址
+            }
+            else {//不是数组 直接保存到虚拟段中
                 switch (varKind){
                     case STATIC -> {
                         vmWriter.writePop(STATIC, baseIndex);
@@ -562,11 +595,11 @@ public class CompilationEngine2 {
     /**
      * 'while' '(' expression ')' '{' statements '}'
      */
-    public void CompileWhile(){
+    public void CompileWhile(int Index){
         outputList.add(whileStatement.getXmlparamstart());
 
         //while的开始标签
-        vmWriter.writeLabel("WHILE_LABLE_START_"+whileIndex);
+        vmWriter.writeLabel("WHILE_LABLE_START_"+Index);
 
         CompileTokenSymbol("while");
         jackTokenizer.advance();
@@ -574,9 +607,10 @@ public class CompilationEngine2 {
         jackTokenizer.advance();
         CompileExpression();
 
-        //此时栈顶是判断
-        vmWriter.writeIF("WHILE_LABLE_END_"+whileIndex);
-
+        //此时栈顶是判断,是真(-1)继续执行，假(0)跳转
+        vmWriter.writeIF("WHILE_LABLE_TRUE_"+Index);
+        vmWriter.writeGoto("WHILE_LABLE_END_"+Index);
+        vmWriter.writeLabel("WHILE_LABLE_TRUE_"+Index);
         jackTokenizer.advance();
         CompileTokenSymbol(")");
         jackTokenizer.advance();
@@ -589,10 +623,9 @@ public class CompilationEngine2 {
         CompileTokenSymbol("}");
 
         //先无条件跳转到开头，再有开头判断要不要跳转到结束标签
-        vmWriter.writeGoto("WHILE_LABLE_START_"+whileIndex);
+        vmWriter.writeGoto("WHILE_LABLE_START_"+Index);
         //while的结束标签
-        vmWriter.writeLabel("WHILE_LABLE_END_"+whileIndex);
-        whileIndex++;
+        vmWriter.writeLabel("WHILE_LABLE_END_"+Index);
 
         outputList.add(whileStatement.getXmlparamend());
     }
@@ -605,6 +638,10 @@ public class CompilationEngine2 {
         CompileTokenKey("return");
         jackTokenizer.advance();
         if (jackTokenizer.tokenType()==tokenType.SYMBOL&&jackTokenizer.symbol().equals(";")){
+
+            //没有返回 返回为void
+            vmWriter.writePush(CONST, 0);
+
             CompileTokenSymbol(";");
         }else {
             CompileExpression();
@@ -619,7 +656,7 @@ public class CompilationEngine2 {
     /**
      * 'if' '(' expression ')' '{' statements '}' ('else' '{' statements '}' )?
      */
-    public void CompileIf(){
+    public void CompileIf(int index){
         outputList.add(ifStatement.getXmlparamstart());
         CompileTokenKey("if");
         jackTokenizer.advance();
@@ -627,9 +664,10 @@ public class CompilationEngine2 {
         jackTokenizer.advance();
         CompileExpression();
 
-        //此时栈顶是判断元素 非0跳过if的执行语句，执行else(如果有)及之后的语句
-        vmWriter.writeIF("IF_LABLE_ELSE_"+ifIndex);
-
+        //此时栈顶是判断元素 -1(真)继续执行 0(假)跳过if的执行语句，执行else(如果有)及之后的语句
+        vmWriter.writeIF("IF_LABLE_START_"+index);
+        vmWriter.writeGoto("IF_LABLE_ELSE_"+index);
+        vmWriter.writeLabel("IF_LABLE_START_"+index);
         jackTokenizer.advance();
         CompileTokenSymbol(")");
         jackTokenizer.advance();
@@ -641,9 +679,9 @@ public class CompilationEngine2 {
         jackTokenizer.advance();
 
         //执行完if跳过else
-        vmWriter.writeGoto("IF_LABLE_END_"+ifIndex);
+        vmWriter.writeGoto("IF_LABLE_END_"+index);
         //else(如果有)及之后的语句加入跳转标签
-        vmWriter.writeLabel("IF_LABLE_ELSE_"+ifIndex);
+        vmWriter.writeLabel("IF_LABLE_ELSE_"+index);
 
         if (jackTokenizer.tokenType()==tokenType.KEYWORD&& jackTokenizer.keyword().equals("else")){
 
@@ -659,8 +697,7 @@ public class CompilationEngine2 {
         }
 
         //跳过else语句加入跳转标签
-        vmWriter.writeLabel("IF_LABLE_END_"+ifIndex);
-        ifIndex++;
+        vmWriter.writeLabel("IF_LABLE_END_"+index);
 
         outputList.add(ifStatement.getXmlparamend());
     }
@@ -778,13 +815,19 @@ public class CompilationEngine2 {
                     }
                     case STRING_CONST -> {
                         CompileTokenStrCon();
-                        String s = jackTokenizer.stringVal();
+                        //vm对字符串如何处理？ 用内置函数创建字符串，栈中最后保留String的基址
+                        String s = jackTokenizer.stringVal().replaceAll("^\"|\"$", "");
                         int n = s.length();
                         char[] chars = s.toCharArray();
-                        vmWriter.writePush(CONST, n);
-                        vmWriter.writeCall(" String.new", 1);
+                        vmWriter.writePush(CONST, n);//需要开辟的字符串长度
+                        vmWriter.writeCall("String.new", 1); //开辟字符串，返回字符串基地址
+                        for(char c : chars){
+                            int c_unicode = (int) c;
+                            vmWriter.writePush(CONST, c_unicode);
+                            vmWriter.writeCall("String.appendChar",2);
+                        }
 
-                        //vm对字符串如何处理？ 用内置函数创建字符串，栈中最后保留String的基址
+
                     }case KEYWORD -> {
                         CompileTokenKey(jackTokenizer.keyword());
                         //关键字可能是 true/false/null/this
@@ -799,7 +842,7 @@ public class CompilationEngine2 {
                             }
                             case "this"->{
                                 //还不知道咋操作？把this的值推入栈中？
-                                vmWriter.writePush(THIS,0);
+                                vmWriter.writePush(POINTER,0);
                             }
                         }
 
@@ -904,10 +947,10 @@ public class CompilationEngine2 {
                 vmWriter.writeArithmetic(SUB);
                 break;
             case "*":
-
+                vmWriter.writeCall("Math.multiply", 2);
                 break;
             case "/":
-
+                vmWriter.writeCall("Math.divide", 2);
                 break;
             case "&":
                 vmWriter.writeArithmetic(AND);
@@ -922,7 +965,7 @@ public class CompilationEngine2 {
                 vmWriter.writeArithmetic(GT);
                 break;
             case "=":
-
+                vmWriter.writeArithmetic(EQ);
                 break;
         }
     }

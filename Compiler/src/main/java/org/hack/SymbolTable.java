@@ -56,6 +56,8 @@ public class SymbolTable {
      private SymbolTable childTable;
 
      SymbolTable(){
+         this.argIndex = 0;
+         this.varIndex = 0;
          tableMap = new HashMap<>();
      }
 

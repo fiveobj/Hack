@@ -7,5 +7,14 @@ package org.hack.enumfile;
  * @version: 1.0
  */
 public enum VMKind {
-    CONST,ARG,LOCAL,STATIC,THIS,THAT,POINTER,TEMP
+    CONST("constant"),ARG("argument"),LOCAL("local"),STATIC("static"),THIS("this"),THAT("that"),POINTER("pointer"),TEMP("temp");
+
+    private String sge;
+    VMKind(String s){
+        sge = s;
+    }
+
+    public String getSge() {
+        return sge;
+    }
 }

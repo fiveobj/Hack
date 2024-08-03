@@ -20,11 +20,11 @@ public class VMWriter {
     }
 
     public void writePush(VMKind seg, int index){
-        ans.add("push "+seg+" "+index);
+        ans.add("push "+seg.getSge()+" "+index);
     }
 
     public void writePop(VMKind seg, int index){
-        ans.add("pop "+seg+" "+index);
+        ans.add("pop "+seg.getSge()+" "+index);
     }
 
     /**
