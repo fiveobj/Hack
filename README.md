@@ -47,12 +47,19 @@
 #### 目录结构
 
 * main/java-代码文件
-  * main:文件读取、代码预处理、执行结果
+  * Main:文件读取、代码预处理、执行结果
   * CompilationEngine:根据字元和语法分析输出结果
+  * CompilationEngine2:在CompilationEngine的基础上 翻译成VM代码
   * JackTokenizer:解析代码字元
-  * tokenType:五种字元类型
+  * VMWriter:生成对应的Vm代码
+  * SymbolTable:符号表
   * tools:工具类
   * xmlParam:标签类
+  * enumfile
+    * VMCommand:运算符
+    * VMkind:虚拟段
+    * symbolKind:变量分类
+    * tokenType:五种字元类型
 * main/resources-测试文件
 
 #### 实现思路
@@ -60,5 +67,5 @@
 1. 读取文件，处理单行注释、多行注释、文档注释，并生成中间文件
 2. 构造JackTokenizer对中间文件进行处理，获得字元
    * 使用在正则表达式对字元进行提取
-3. 构造CompilationEngine对JackTokenizer中的字元根据语法规则进行匹配
-4. 最终输出结果到xml文件
+3. 构造CompilationEngine2对JackTokenizer中的字元根据语法规则进行匹配并生成对应的VM代码
+4. 最终输出结果到xml文件、vm文件
