@@ -1,0 +1,121 @@
+class Math {
+    static Array twoToThe;
+    function void init(){
+        let twoToThe = new Array.new(16);
+        let twoToThe[0] = 1;
+        let twoToThe[1] = 2;
+        let twoToThe[2] = 4;
+        let twoToThe[3] = 8;
+        let twoToThe[4] = 16;
+        let twoToThe[5] = 32;
+        let twoToThe[6] = 64;
+        let twoToThe[7] = 128;
+        let twoToThe[8] = 256;
+        let twoToThe[9] = 512;
+        let twoToThe[10] = 1024;
+        let twoToThe[11] = 2048;
+        let twoToThe[12] = 4096;
+        let twoToThe[13] = 8192;
+        let twoToThe[14] = 16384;
+        let twoToThe[15] = 16384 + 16384;
+        return;
+    }
+
+    function int abs(int x){
+        if(x<0){
+            return -x;
+        }else {
+            return x;
+        }
+
+    }
+
+    function int multiply(int x, int y){
+        var int sum;
+        var int shiftedX;
+        var int i;
+
+        let sum=0;
+        let shiftedX=x;
+        let i=0;
+
+        while(i<16){
+            if(~((y&twoToThe[i])=0)){
+                let sum = sum + shiftedX;
+            }
+            let shiftedX = shiftedX + shiftedX;
+            let i = i + 1;
+        }
+
+        return sum;
+    }
+
+    function int divide(int x, int y){
+        var boolean isMi;
+        var int q;
+        var int shiftedY;
+        var int absResult;
+
+        if(((x<0)&(y>0))|((x>0)&(y<0))){
+            let isMi = true;
+        }else {
+            let isMi = false;
+        }
+
+        let x = Math.abs(x);
+        let y = Math.abs(y);
+
+        if(y>x){
+            return 0;
+        }
+        let shiftedY = multiply(2,y);
+        let q = divide(x, shiftedY);
+        if((x-multiply(q, shiftedY))<y){
+            let absResult = multiply(2, q);
+        }else {
+            let absResult = multiply(2, q)+1;
+        }
+
+        if(isMi){
+            return -absResult;
+        }else {
+            return absResult;
+        }
+    }
+
+    function int min(int x, int y){
+        if(x<y){
+            return x;
+        }else {
+            return y;
+        }
+    }
+
+    function int max(int x, int y){
+        if(x>y){
+            return x;
+        }else {
+            return y;
+        }
+    }
+
+    function int sqrt(int x){
+        var int y;
+        var int i;
+        var int condition;
+        vat int yPlusTwoEj;
+
+        let y = 0;
+        let i = 7;
+        while(~(i<0)){
+            let yPlusTwoEj = y + twoToThe[i];
+            let condition = multiply(yPlusTwoEj, yPlusTwoEj);
+            if((~(condition>x))&(condition>0)){
+                let y = yPlusTwoEj;
+            }
+            let i = i-1;
+        }
+        return y;
+    }
+
+}

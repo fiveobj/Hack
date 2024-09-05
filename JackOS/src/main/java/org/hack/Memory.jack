@@ -1,0 +1,74 @@
+class Memory(){
+     /** Initializes the class. */
+
+     static Array memory;
+     static int heapBase;
+     static int freeList;
+     static int listEnd;
+
+    function void init() {
+        let heapBase = 2048;
+        let freeList = heapBase;
+        let memory[freeList] = 14336;
+        let memory[freeList+1]=null;
+        let listEnd = freeList+1;
+        return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+        return memory[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+        let memory[address] = value;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address. */
+    function int alloc(int size) {
+        var int bestAdd, curSize, p, q;
+        var boolean end;
+        let size = size + 2;
+
+        let p = freeList;
+        let q = memory[p+1]
+        let curSize = memory[freeList];
+        let bestAdd = freeList;
+
+        while(~(p=null)){
+            if(~(memory[p]<size)){
+                if(memory[bestAdd]>memory[p]){
+                    let bestAdd = p;
+                }
+            }
+            p = q;
+            q = memory[p+1];
+        }
+
+        if(memory[bestAdd]<size){
+            return -1;
+        }
+
+        let memory[bestAdd] = memory[bestAdd] - size;
+        let bestAdd = bestAdd + memory[bestAdd];
+        let memory[bestAdd] = size;
+
+        return bestAdd+2;
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations. */
+    function void deAlloc(Array o) {
+        var int segment, p;
+    
+        let segment = o-2;
+        let memory[segment+1] = null;
+        let listEnd = segment;
+
+        return;
+
+    }    
+
+}
